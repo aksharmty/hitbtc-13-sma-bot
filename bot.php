@@ -5,7 +5,7 @@ include "connect.php";
 define('TIMEZONE', 'Asia/kolkata');
 date_default_timezone_set(TIMEZONE);
   $date = DATE("Y-m-d H:i:s");
-  $keyapi = 'HITBTC_API_KEY:SECRET_KEY'; //wrtite your api key
+  $keyapi = 'hitbtc_api_key:secret_key'; //wrtite your api key
 $askup00 = "SELECT * FROM trade where type !='1' order by id desc limit 1";
 $result00 = $connection->query($askup00);
 if ($result00->num_rows > 0) {
@@ -135,17 +135,13 @@ echo "</font>";
 <?php
 //vol and quantity
 // risk management
-//$c = mysqli_fetch_assoc(mysqli_query($connection,"select * from coin where coin = '$coin'"));
-//$preq = $c['quantity'];
-//if($typ == 1){
 $mp = number_format($marketbalance-$marketbalance*85/100,10,".","");
 echo "<br> fund for this trade use ".$market ." = ".$mp;
-//$quantity= floor($qq0/0.000010)*0.000010;
 $qq = $mp/$ask/1; //echo "qq " .$qq;
 $quanti = floor($qq/$preq)*$preq;
 $quantityn = number_format($quanti,11,".","");
 echo "<br>Buy Qq ", $quantityn; 
-//}
+
 ?>
 <?php
 echo "<br>Buy price : ". $ask;
@@ -165,6 +161,15 @@ $sellcid=$askup0['sellcid']; echo "<br>sellcid :" , $sellcid;
 $sellprice0=$askup0['sellprice']; echo "<br>sellprice0 :" , $sellprice0;
 $ba=$askup0['ba']; echo "<br>ba :" , $ba;
 $sallprice0=$askup0['sa']; echo "<br>sa :" , $sa;
+
+$count0 = mysqli_fetch_assoc(mysqli_query($connection,"select count(type) as count from trade where pair = '$pair' AND type = '0'"));
+$count = $count0['count']; echo " <br>count ".$count; 
+$levelqu = $lastqu*2;
+if($count > 0){ $quantity = $levelqu; } else { $quantity = $quantityn; }
+echo "<br> quantity ". $quantity;
+$btcl = $quantity*$buy; $btclow = number_format($btcl,11);
+echo "<br>btc low :",$btclow;
+    
 ?>
 <?php
 // buy average cal
@@ -209,6 +214,7 @@ $triggerup = mysqli_query($connection,"update trade set ask = '0' where pair = '
 <?php
 echo "<br>Buy SIDE<br>";
    //buy code 
+if($count < 3){   
 if($lastclose > $ma9 && $cuopen > $lastclose && $cuclose > $lastmax){ echo "<br>Up Buy Trand start"; 
 // buy code start
 $symbol = "$pair";
@@ -258,6 +264,7 @@ $hmasup0 = mysqli_query($connection,"update trade set hmas = '3' where hmas = '1
 } else {echo "<br>Buy Balance low"; $hmaup = mysqli_query($connection,"update tradebtc set hmas = 'FUND MISSING' , ask ='0' where pair = '$pair' AND id = '$idu'");}
 } else {echo "<br>trigger 0";}
 } else {echo "Buy trand off";}
+} else {echo "last 3 order not done";}
 ?>  
 //
 <?PHP

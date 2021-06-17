@@ -5,7 +5,7 @@ include "connect.php";
 define('TIMEZONE', 'Asia/kolkata');
 date_default_timezone_set(TIMEZONE);
   $date = DATE("Y-m-d H:i:s");
-  $keyapi = 'cHxtLRjcqNVLu7_rZiORQMtbkhD-ZilR:trkn4Y8t3KxpJUVvJjoZRTnkfSnHp-5K'; //wrtite your api key
+  $keyapi = 'HITBTC_API_KEY:SECRET_KEY'; //wrtite your api key
 $askup00 = "SELECT * FROM trade where type !='1' order by id desc limit 1";
 $result00 = $connection->query($askup00);
 if ($result00->num_rows > 0) {

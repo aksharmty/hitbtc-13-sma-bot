@@ -5,7 +5,7 @@ include "connect.php";
 define('TIMEZONE', 'Asia/kolkata');
 date_default_timezone_set(TIMEZONE);
   $date = DATE("Y-m-d H:i:s");
-  $keyapi = 'hitbtc_api_key:secret_key'; //wrtite your api key
+  $keyapi = 'HITBTC_API_KEY:SECRET_KEY'; //wrtite your api key
 $askup00 = "SELECT * FROM trade where type !='1' order by id desc limit 1";
 $result00 = $connection->query($askup00);
 if ($result00->num_rows > 0) {
@@ -18,7 +18,7 @@ if ($coinsqlresult->num_rows > 0) {
   // output data of each row
   while($row0 = $coinsqlresult->fetch_assoc()) {
     $coin1 = $row0["coin"];$preq = $row0["quantity"]; $coin1ch = $row0["ch"]; $coin1son =$row0["son"]; $market1=$row0["market"]; echo "id: " . $row0["id"]. " - Coin1: " . $row0["coin"]. " - market1: " . $row0["market"]. " " . $row0["ch"]. "<br>";
-    $coinsqlup0 = mysqli_query($connection,"update coin set ch ='0' where coin ='$coin1'");
+  //  $coinsqlup0 = mysqli_query($connection,"update coin set ch ='0' where coin ='$coin1'");
 }
 } else {  echo "0 results"; $coinsqlup = mysqli_query($connection,"update coin set ch ='1'"); } 
 }
@@ -135,7 +135,7 @@ echo "</font>";
 <?php
 //vol and quantity
 // risk management
-$mp = number_format($marketbalance-$marketbalance*85/100,10,".","");
+$mp = number_format($marketbalance-$marketbalance*80/100,10,".","");
 echo "<br> fund for this trade use ".$market ." = ".$mp;
 $qq = $mp/$ask/1; //echo "qq " .$qq;
 $quanti = floor($qq/$preq)*$preq;
@@ -156,11 +156,12 @@ $typ = $askup0['type']; echo "<br>typ :" , $typ;
 $dlastbal = $askup0['dlastbal']; echo "<br>dlastbal :" , $dlastbal;
 $lastbal = $askup0['lastbal']; echo "<br>lastbal :" , $lastbal;
 $lastprice = $askup0['price']; echo "<br>lastprice :" , $lastprice;
+$waitprice = number_format($lastprice-$lastprice*5/100,11,".",""); echo "<br>waitprice :" , $waitprice;
 $buycid=$askup0['clientOrderId']; echo "<br>buycid :" , $buycid;
 $sellcid=$askup0['sellcid']; echo "<br>sellcid :" , $sellcid;
 $sellprice0=$askup0['sellprice']; echo "<br>sellprice0 :" , $sellprice0;
 $ba=$askup0['ba']; echo "<br>ba :" , $ba;
-$sallprice0=$askup0['sa']; echo "<br>sa :" , $sa;
+$sa=$askup0['sa']; echo "<br>sa :" , $sa;
 
 $count0 = mysqli_fetch_assoc(mysqli_query($connection,"select count(type) as count from trade where pair = '$pair' AND type = '0'"));
 $count = $count0['count']; echo " <br>count ".$count; 
@@ -174,7 +175,7 @@ echo "<br>btc low :",$btclow;
 <?php
 // buy average cal
 if($ba != 1){ $avgcid = $buycid; $basa = "ON";}
-if($sellcid != 0 && $sa != 1){$avgcid = $sellcid; $basa = "ON";}
+if($sellcid != "0" && $sa != 1){$avgcid = $sellcid; $basa = "ON"; echo " <br>basa sell";}
 if($basa == "ON"){ echo " onnnn";
 $cht = curl_init("https://api.hitbtc.com/api/2/history/order?clientOrderId=$avgcid"); 
  curl_setopt($cht, CURLOPT_USERPWD, $keyapi);// API AND KEY
@@ -190,6 +191,7 @@ foreach($tavg as $ravg) //Extract the Array Values by using Foreach Loop
           echo ".$ravg[clientOrderId].";
           echo ".$ravg[side].";
           echo "avg price :", $fcost;
+          $fcost1=$ravg['price']; echo "avg price1 :", $fcost1;
            
           
           }
@@ -198,20 +200,24 @@ $fsellprice = number_format($fcost+$fcost*0.25/100,11,".",""); echo "<br> fsellc
 //avgprice end 
 if($ba != 1){ echo " open ba ";
  $fcostup = mysqli_query($connection,"update trade set price = '$fcost' , sellprice ='$fsellprice', ba ='1'  where id = '$idu'"); }else{  echo " price no need update"; }
-if($sellcid != 0 && $sa != 1){ echo " open sa ";
- $fcostup0 = mysqli_query($connection,"update trade set sell ='$fcost', sa = '1' where id = '$idu'"); }else{  echo " *** sell price no need update"; }
+if($sellcid != "0" && $sa != 1){ echo " open sa "; 
+ $fcostup0 = mysqli_query($connection,"update trade set sell ='$fcost1', sa = '1' where id = '$idu'"); }else{  echo " *** sell price no need update"; }
 }
 ?>
 <?php
 $trigger = $askup0['ask'];
 echo "trigger up " . $askup0['ask'];
-if($lastmax > $ma9){ echo "<br> trigger up ";
+if($lastmax > $ma9){ $trigon = "ON";}
+if($ma9 < $lastmax && $lastmax < $trigger){ $trigon = "ON";}
+if($trigon == "ON"){ echo "<br> trigger up ";
 $triggerup = mysqli_query($connection,"update trade set ask = '$lastmax' where pair = '$pair' AND id = '$idu'");
-} else { echo "<br> trigger up 0";
+} 
+if($ma9 > $lastmax && $trigger > 0){ echo "<br> trigger up 0";
 $triggerup = mysqli_query($connection,"update trade set ask = '0' where pair = '$pair' AND id = '$idu'");
 }
 ?>
-<?php
+
+<?php 
 echo "<br>Buy SIDE<br>";
    //buy code 
 if($count < 3){   
@@ -224,7 +230,8 @@ $quantityb="$quantity";
 if($trigger <= $cuclose && $trigger > 0){ echo "trigger ok<br>";
 //if($price > "0.000000001"){ echo "buy price check<br>";
 if($marketbalance > $btclow){ echo "buy fund enough";
-if($typ == "1" && $hmas =="1"){ echo "type 1 ok";
+if($count > 0 && $waitprice < $lastclose){ $hmas1 = "WAIT";} else { $hmas1 = $hmas;}
+if($typ == "1" && $hmas1 =="1"){ echo "type 1 ok";
 
 $ch = curl_init();
 //do a post
@@ -315,8 +322,8 @@ $symbol = "$pairs";
 $type = "limit";
 $price1 = "$sellpre";
 $quantitys= "$quantitys"; echo " symbol ". $symbol . " type " . $type . " price1 ". $price1  . " quantitys  ". $quantitys;
-if($ma9 > $lastclose && $cuclose <= $lastmin){ echo "price sell check<br>";
-if($price1 > "0.00000001"){ echo "sell price check<br>";
+if($ma9 >= $lastclose && $cuclose <= $lastmin){ echo "price sell check<br>";
+if($price1 > "0.00000001" && $presell < $bid){ echo "sell price check<br>";
 if($coinbalance >= $quantitys){ echo "sell fund enough";
 
 $ch1 = curl_init();
